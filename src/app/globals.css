@@ -45,3 +45,75 @@ a {
     background: rgba(31, 111, 104, 0.18);
     color: var(--foreground);
 }
+
+.blog-prose {
+    color: var(--foreground);
+}
+
+.blog-prose > * + * {
+    margin-top: 1.4rem;
+}
+
+.blog-prose h2,
+.blog-prose h3,
+.blog-prose h4 {
+    margin-top: 2.2rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.blog-prose h2 {
+    font-size: 1.875rem;
+}
+
+.blog-prose h3 {
+    font-size: 1.5rem;
+}
+
+.blog-prose p,
+.blog-prose li,
+.blog-prose blockquote {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 2;
+}
+
+.blog-prose a {
+    color: var(--accent);
+}
+
+.blog-prose ul,
+.blog-prose ol {
+    padding-left: 1.25rem;
+}
+
+.blog-prose ul {
+    list-style: disc;
+}
+
+.blog-prose ol {
+    list-style: decimal;
+}
+
+.blog-prose blockquote {
+    border-left: 3px solid rgba(31, 111, 104, 0.28);
+    padding-left: 1rem;
+}
+
+.blog-prose pre {
+    overflow-x: auto;
+    border-radius: 1.25rem;
+    background: #1f1d17;
+    padding: 1rem;
+    color: #f8f4ec;
+}
+
+.blog-prose code {
+    font-family: var(--font-geist-mono), monospace;
+}
+
+.blog-prose img {
+    height: auto;
+    width: 100%;
+    border-radius: 1.5rem;
+}
