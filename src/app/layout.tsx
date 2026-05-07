@@ -14,13 +14,20 @@ const geistMono = Geist_Mono({
     subsets: ['latin']
 })
 
+const faviconVersion = '20260507-1626'
+
 export const metadata: Metadata = {
     title: {
         default: 'Germán Cocca',
         template: '%s | Germán Cocca'
     },
     description:
-        'AI, Cloud & Fullstack Developer building useful products with JavaScript, TypeScript, React, Node.js, and AWS.'
+        'AI, Cloud & Fullstack Developer building useful products with JavaScript, TypeScript, React, Node.js, and AWS.',
+    icons: {
+        icon: `/ico.png?v=${faviconVersion}`,
+        shortcut: `/ico.png?v=${faviconVersion}`,
+        apple: `/ico.png?v=${faviconVersion}`
+    }
 }
 
 export default function RootLayout({
