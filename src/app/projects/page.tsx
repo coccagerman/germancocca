@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import { ProjectsPlaceholder } from '@/components/sections/projects-placeholder'
+import { ProjectsShowcase } from '@/components/sections/projects-showcase'
+import { projects } from '@/lib/projects'
 
 export const metadata: Metadata = {
     title: 'Projects',
-    description: 'A placeholder portfolio section for selected work, case studies, and future project highlights.'
+    description: 'Case studies of real products designed and developed to solve concrete operational problems.'
 }
 
 export default function ProjectsPage() {
-    return <ProjectsPlaceholder />
+    return <ProjectsShowcase projects={projects} />
 }

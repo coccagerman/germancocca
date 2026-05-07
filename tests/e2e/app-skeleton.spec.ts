@@ -9,7 +9,8 @@ test('main routes render and navigation works', async ({ page }) => {
 
     await primaryNav.getByRole('link', { name: 'Projects' }).click()
     await expect(page).toHaveURL(/\/projects$/)
-    await expect(page.getByRole('heading', { name: 'Selected projects will live here.' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Selected work that shows how I design/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Aggendia' })).toBeVisible()
 
     await primaryNav.getByRole('link', { name: 'Blog' }).click()
     await expect(page).toHaveURL(/\/blog$/)
