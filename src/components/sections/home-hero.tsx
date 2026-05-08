@@ -5,12 +5,14 @@ const sectionLinks = [
     {
         href: '/projects',
         label: 'Browse projects',
-        description: 'A curated space for selected work, case studies, and future product snapshots.'
+        description:
+            'Personal projects where I apply new ideas, explore what I am learning, and show how I build as a developer.'
     },
     {
         href: '/blog',
         label: 'Read the blog',
-        description: 'Notes, articles, and technical writing that will later be connected to Hashnode.'
+        description:
+            'Technical articles I write to capture what I am learning and share knowledge with other developers.'
     },
     {
         href: '/contact',
@@ -74,6 +76,14 @@ export function HomeHero() {
                         className='inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-sm font-medium text-foreground transition hover:bg-surface'
                     >
                         LinkedIn
+                    </a>
+                    <a
+                        href='/GermanCoccaCV.pdf'
+                        target='_blank'
+                        rel='noreferrer'
+                        className='inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-sm font-medium text-foreground transition hover:bg-surface'
+                    >
+                        Download Resume
                     </a>
                 </div>
             </div>

@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { BlogSearch } from '@/components/sections/blog-search'
 import {
-    buildBlogPageHref,
+    buildBlogPaginationControls,
     filterBlogPosts,
     formatBlogDate,
     normalizeBlogQuery,
@@ -62,6 +63,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
     const filteredPosts = filterBlogPosts(allPosts, normalizedQuery)
     const pagination = paginateBlogPosts(filteredPosts, requestedPage)
+    const paginationControls = buildBlogPaginationControls(
+        pagination.currentPage,
+        pagination.totalPages,
+        normalizedQuery
+    )
 
     return (
         <section className='space-y-10'>
@@ -98,44 +104,69 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             ) : (
                 <div className='grid gap-5'>
                     {pagination.items.map(post => (
-                        <article key={post.slug} className='rounded-3xl border border-border bg-surface p-6 sm:p-7'>
-                            <div className='flex flex-wrap items-center gap-3 text-xs font-medium uppercase tracking-[0.18em] text-muted'>
-                                <span>{formatBlogDate(post.publishedAt)}</span>
-                                <span>{post.sourceLabel}</span>
-                            </div>
-                            <h2 className='mt-4 text-2xl font-semibold text-foreground sm:text-3xl'>
-                                <Link href={`/blog/${post.slug}`} className='transition hover:text-accent'>
-                                    {post.title}
-                                </Link>
-                            </h2>
-                            <p className='mt-3 max-w-3xl text-sm leading-7 text-muted sm:text-base'>{post.summary}</p>
-                            {post.tags.length > 0 ? (
-                                <div className='mt-5 flex flex-wrap gap-2'>
-                                    {post.tags.slice(0, 4).map(tag => (
-                                        <span
-                                            key={tag}
-                                            className='rounded-full border border-border px-3 py-1 text-xs font-medium text-muted'
+                        <article
+                            key={post.slug}
+                            className='overflow-hidden rounded-3xl border border-border bg-surface'
+                        >
+                            <div className='flex flex-col gap-5 p-5 sm:p-6 md:flex-row md:items-start md:gap-7'>
+                                {post.coverImage ? (
+                                    <Link
+                                        href={`/blog/${post.slug}`}
+                                        className='group relative block aspect-16/10 w-full overflow-hidden rounded-[1.6rem] bg-[rgba(54,39,20,0.08)] md:w-[18rem] md:flex-none'
+                                        aria-label={`Open ${post.title}`}
+                                    >
+                                        <Image
+                                            src={post.coverImage}
+                                            alt={`${post.title} cover image`}
+                                            fill
+                                            sizes='(min-width: 1024px) 18rem, (min-width: 768px) 18rem, 100vw'
+                                            className='object-cover object-top-left transition duration-500 group-hover:scale-[1.03]'
+                                        />
+                                    </Link>
+                                ) : null}
+
+                                <div className='min-w-0 flex-1 py-1'>
+                                    <div className='flex flex-wrap items-center gap-3 text-xs font-medium uppercase tracking-[0.18em] text-muted'>
+                                        <span>{formatBlogDate(post.publishedAt)}</span>
+                                        <span>{post.sourceLabel}</span>
+                                    </div>
+                                    <h2 className='mt-4 text-2xl font-semibold text-foreground sm:text-3xl'>
+                                        <Link href={`/blog/${post.slug}`} className='transition hover:text-accent'>
+                                            {post.title}
+                                        </Link>
+                                    </h2>
+                                    <p className='mt-3 max-w-3xl text-sm leading-7 text-muted sm:text-base'>
+                                        {post.summary}
+                                    </p>
+                                    {post.tags.length > 0 ? (
+                                        <div className='mt-5 flex flex-wrap gap-2'>
+                                            {post.tags.slice(0, 4).map(tag => (
+                                                <span
+                                                    key={tag}
+                                                    className='rounded-full border border-border px-3 py-1 text-xs font-medium text-muted'
+                                                >
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                    <div className='mt-6 flex flex-wrap gap-4'>
+                                        <Link
+                                            href={`/blog/${post.slug}`}
+                                            className='inline-flex text-sm font-medium text-accent transition hover:text-foreground'
                                         >
-                                            {tag}
-                                        </span>
-                                    ))}
+                                            Read article
+                                        </Link>
+                                        <a
+                                            href={post.originalUrl}
+                                            target='_blank'
+                                            rel='noreferrer'
+                                            className='inline-flex text-sm font-medium text-muted transition hover:text-foreground'
+                                        >
+                                            Open original
+                                        </a>
+                                    </div>
                                 </div>
-                            ) : null}
-                            <div className='mt-6 flex flex-wrap gap-4'>
-                                <Link
-                                    href={`/blog/${post.slug}`}
-                                    className='inline-flex text-sm font-medium text-accent transition hover:text-foreground'
-                                >
-                                    Read article
-                                </Link>
-                                <a
-                                    href={post.originalUrl}
-                                    target='_blank'
-                                    rel='noreferrer'
-                                    className='inline-flex text-sm font-medium text-muted transition hover:text-foreground'
-                                >
-                                    Open original
-                                </a>
                             </div>
                         </article>
                     ))}
@@ -143,25 +174,53 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             )}
 
             {filteredPosts.length > 0 && pagination.totalPages > 1 ? (
-                <nav aria-label='Pagination' className='flex flex-wrap gap-3'>
-                    {Array.from({ length: pagination.totalPages }, (_, index) => index + 1).map(page => {
-                        const isCurrentPage = page === pagination.currentPage
+                <nav aria-label='Pagination' className='flex justify-center'>
+                    <div className='flex flex-wrap items-center justify-center gap-3'>
+                        {[
+                            paginationControls.first,
+                            paginationControls.previous,
+                            ...paginationControls.pages,
+                            paginationControls.next,
+                            paginationControls.last
+                        ].map(control => {
+                            const className = `inline-flex min-w-11 justify-center rounded-full px-4 py-2 text-sm font-medium transition ${
+                                control.isCurrent
+                                    ? 'bg-foreground text-background'
+                                    : control.href
+                                      ? 'border border-border text-foreground hover:bg-surface'
+                                      : 'border border-border text-muted opacity-45'
+                            }`
 
-                        return (
-                            <Link
-                                key={page}
-                                href={buildBlogPageHref(page, normalizedQuery)}
-                                aria-current={isCurrentPage ? 'page' : undefined}
-                                className={`inline-flex min-w-11 justify-center rounded-full px-4 py-2 text-sm font-medium transition ${
-                                    isCurrentPage
-                                        ? 'bg-foreground text-background'
-                                        : 'border border-border text-foreground hover:bg-surface'
-                                }`}
-                            >
-                                {page}
-                            </Link>
-                        )
-                    })}
+                            if (!control.href) {
+                                return (
+                                    <span
+                                        key={`${control.ariaLabel}-${control.label}`}
+                                        aria-label={control.ariaLabel}
+                                        aria-disabled={control.isEllipsis ? undefined : 'true'}
+                                        className={
+                                            control.isEllipsis
+                                                ? 'px-1 text-sm font-medium tracking-[0.2em] text-muted'
+                                                : className
+                                        }
+                                    >
+                                        {control.label}
+                                    </span>
+                                )
+                            }
+
+                            return (
+                                <Link
+                                    key={control.ariaLabel}
+                                    href={control.href}
+                                    aria-current={control.isCurrent ? 'page' : undefined}
+                                    aria-label={control.ariaLabel}
+                                    className={className}
+                                >
+                                    {control.label}
+                                </Link>
+                            )
+                        })}
+                    </div>
                 </nav>
             ) : null}
         </section>

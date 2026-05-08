@@ -2,6 +2,22 @@ import type { BlogPost } from '@/lib/hashnode'
 
 export const BLOG_POSTS_PER_PAGE = 6
 
+export type BlogPaginationControl = {
+    href: string | null
+    label: string
+    ariaLabel: string
+    isCurrent?: boolean
+    isEllipsis?: boolean
+}
+
+export type BlogPaginationControls = {
+    first: BlogPaginationControl
+    previous: BlogPaginationControl
+    pages: BlogPaginationControl[]
+    next: BlogPaginationControl
+    last: BlogPaginationControl
+}
+
 export function normalizeBlogQuery(value: string | string[] | undefined) {
     if (Array.isArray(value)) {
         return value[0]?.trim() ?? ''
@@ -69,4 +85,76 @@ export function buildBlogPageHref(page: number, query: string) {
     const queryString = params.toString()
 
     return queryString ? `/blog?${queryString}` : '/blog'
+}
+
+export function buildBlogPaginationControls(
+    currentPage: number,
+    totalPages: number,
+    query: string
+): BlogPaginationControls {
+    const hasPreviousPage = currentPage > 1
+    const hasNextPage = currentPage < totalPages
+    const pagesToShow = buildVisiblePaginationPages(currentPage, totalPages)
+
+    return {
+        first: {
+            href: hasPreviousPage ? buildBlogPageHref(1, query) : null,
+            label: '<<',
+            ariaLabel: 'Go to first page'
+        },
+        previous: {
+            href: hasPreviousPage ? buildBlogPageHref(currentPage - 1, query) : null,
+            label: '<',
+            ariaLabel: 'Go to previous page'
+        },
+        pages: pagesToShow.map(page => {
+            if (page === null) {
+                return {
+                    href: null,
+                    label: '...',
+                    ariaLabel: 'More pages',
+                    isEllipsis: true
+                }
+            }
+
+            return {
+                href: buildBlogPageHref(page, query),
+                label: String(page),
+                ariaLabel: `Go to page ${page}`,
+                isCurrent: page === currentPage
+            }
+        }),
+        next: {
+            href: hasNextPage ? buildBlogPageHref(currentPage + 1, query) : null,
+            label: '>',
+            ariaLabel: 'Go to next page'
+        },
+        last: {
+            href: hasNextPage ? buildBlogPageHref(totalPages, query) : null,
+            label: '>>',
+            ariaLabel: 'Go to last page'
+        }
+    }
+}
+
+function buildVisiblePaginationPages(currentPage: number, totalPages: number) {
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1)
+    }
+
+    const visiblePages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1])
+    const sortedPages = Array.from(visiblePages)
+        .filter(page => page >= 1 && page <= totalPages)
+        .sort((a, b) => a - b)
+    const compactPages: Array<number | null> = []
+
+    sortedPages.forEach((page, index) => {
+        if (index > 0 && page - sortedPages[index - 1] > 1) {
+            compactPages.push(null)
+        }
+
+        compactPages.push(page)
+    })
+
+    return compactPages
 }

@@ -39,3 +39,22 @@ test('blog search updates the URL and filters the list', async ({ page }) => {
     await expect(page).toHaveURL(/\/blog\?q=nestjs/)
     await expect(page.getByRole('heading', { name: /nestjs/i })).toBeVisible()
 })
+
+test('blog cards show thumbnails and centered pagination controls work', async ({ page }) => {
+    await page.goto('/blog')
+
+    await expect(page.locator('article img[alt$="cover image"]').first()).toBeVisible()
+
+    const pagination = page.getByRole('navigation', { name: 'Pagination' })
+    await expect(pagination).toBeVisible()
+    await expect(pagination.getByLabel('Go to first page')).toBeVisible()
+    await expect(pagination.getByLabel('Go to previous page')).toBeVisible()
+
+    await pagination.getByLabel('Go to next page').click()
+    await expect(page).toHaveURL(/\/blog\?page=2/)
+
+    await expect(page.getByRole('navigation', { name: 'Pagination' }).getByLabel('Go to last page')).toBeVisible()
+
+    await page.getByRole('navigation', { name: 'Pagination' }).getByLabel('Go to last page').click()
+    await expect(page).toHaveURL(/page=6/)
+})
