@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { HomeHero } from '@/components/sections/home-hero'
+import { HomeContent } from '@/components/sections/home-content'
 
 export const metadata: Metadata = {
     title: 'Germán Cocca',
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 }
 
 export default function Home() {
-    return <HomeHero />
+    return <HomeContent />
 }
