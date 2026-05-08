@@ -48,7 +48,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     } catch {
         return (
             <section className='space-y-8'>
-                <div className='max-w-3xl space-y-4'>
+                <div className='w-full space-y-4'>
                     <p className='text-sm font-medium uppercase tracking-[0.28em] text-accent'>Blog</p>
                     <h1 className='text-4xl font-semibold tracking-tight text-foreground sm:text-5xl'>
                         Articles are temporarily unavailable.
@@ -71,14 +71,15 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
     return (
         <section className='space-y-10'>
-            <div className='max-w-3xl space-y-4'>
+            <div className='w-full space-y-4'>
                 <p className='text-sm font-medium uppercase tracking-[0.28em] text-accent'>Blog</p>
                 <h1 className='text-4xl font-semibold tracking-tight text-foreground sm:text-5xl'>
-                    Articles and handbooks published on freeCodeCamp.
+                    My articles, notes, and handbooks on software engineering.
                 </h1>
                 <p className='text-base leading-8 text-muted sm:text-lg'>
-                    A server-rendered archive of my writing, sourced from Hashnode and republished here with clean URLs,
-                    search, and paginated navigation.
+                    This is where I turn experience into writing: original articles that help me clarify what I know,
+                    share practical knowledge with other developers, and document ideas that matter to the way I build.
+                    Some of them were also published on freeCodeCamp.
                 </p>
             </div>
 

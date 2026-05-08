@@ -13,13 +13,13 @@ type ProjectTab = 'general' | 'technical'
 export function ProjectsShowcase({ projects }: ProjectsShowcaseProps) {
     return (
         <section className='space-y-10'>
-            <div className='max-w-3xl space-y-4'>
+            <div className='w-full space-y-4'>
                 <p className='text-sm font-medium uppercase tracking-[0.28em] text-accent'>{projectsCopy.title}</p>
                 <h1 className='text-4xl font-semibold tracking-tight text-foreground sm:text-5xl'>
                     Selected work that shows how I design, architect, and ship useful software as a developer.
                 </h1>
                 <p className='text-base leading-8 text-muted sm:text-lg'>{projectsCopy.subtitle}</p>
-                <p className='max-w-2xl text-sm leading-7 text-muted sm:text-base'>
+                <p className='text-sm leading-7 text-muted sm:text-base'>
                     Each project is presented to highlight product thinking, implementation depth, reliability, and the
                     engineering decisions behind the final experience.
                 </p>

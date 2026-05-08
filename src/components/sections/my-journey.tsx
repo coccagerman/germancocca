@@ -60,7 +60,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
             id='my-journey'
             ref={sectionRef}
             aria-labelledby='my-journey-title'
-            className='relative isolate -mx-6 bg-[#f4eee4] px-6 pt-10 pb-12 sm:-mx-10 sm:px-10 sm:pt-14 sm:pb-16 lg:-mx-12 lg:px-12'
+            className='relative isolate -mx-6 bg-[#f4eee4] px-6 pt-10 pb-6 sm:-mx-10 sm:px-10 sm:pt-14 sm:pb-8 lg:-mx-12 lg:px-12'
         >
             <div className='absolute inset-0 -z-10 bg-[#f4eee4]' aria-hidden='true' />
 
@@ -90,7 +90,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
                             {activeEntry.role}
                         </h3>
                         <p className='mt-1 text-base font-medium text-muted'>{activeEntry.organization}</p>
-                        <p className='mt-5 text-sm leading-7 text-muted sm:text-base'>{activeEntry.lesson}</p>
+                        <p className='mt-5 text-sm leading-7 text-muted sm:text-base'>{activeEntry.focus}</p>
 
                         <div className='mt-6 flex flex-wrap gap-2'>
                             {activeEntry.highlights.map(highlight => (
@@ -174,7 +174,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
                                                 <p className='text-base font-medium text-muted'>{entry.organization}</p>
                                             </div>
 
-                                            <OrganizationLogo entry={entry} />
+                                            <OrganizationLogo entry={entry} isActive={isActive} />
                                         </div>
 
                                         <p className='text-sm leading-7 text-muted sm:text-base'>{entry.story}</p>
@@ -195,7 +195,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
                 </div>
             </div>
 
-            <div className='rounded-4xl border border-border bg-[linear-gradient(135deg,rgba(255,253,249,0.96),rgba(246,241,232,0.88))] p-7 shadow-[0_18px_44px_rgba(31,29,23,0.08)] sm:p-8'>
+            <div className='mt-10 rounded-4xl border border-border bg-[linear-gradient(135deg,rgba(255,253,249,0.96),rgba(246,241,232,0.88))] p-7 shadow-[0_18px_44px_rgba(31,29,23,0.08)] sm:mt-14 sm:p-8'>
                 <div className='flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between'>
                     <div className='max-w-2xl space-y-3'>
                         <p className='text-sm font-medium uppercase tracking-[0.28em] text-accent'>Next step</p>
@@ -227,7 +227,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
                 </div>
             </div>
 
-            <div className='flex justify-center pt-2'>
+            <div className='flex justify-center pt-8'>
                 <button
                     type='button'
                     onClick={scrollToTop}
@@ -249,7 +249,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
     )
 }
 
-function OrganizationLogo({ entry }: { entry: JourneyEntry }) {
+function OrganizationLogo({ entry, isActive = false }: { entry: JourneyEntry; isActive?: boolean }) {
     const commonClassName =
         'group inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1rem] transition duration-300 ease-out hover:-translate-y-0.5 sm:h-[4.5rem] sm:w-[4.5rem]'
 
@@ -261,7 +261,10 @@ function OrganizationLogo({ entry }: { entry: JourneyEntry }) {
                     alt={entry.logoAlt ?? `${entry.organization} logo`}
                     width={96}
                     height={96}
-                    className='h-full w-full rounded-2xl object-cover grayscale transition duration-300 ease-out group-hover:scale-105 group-hover:grayscale-0'
+                    className={[
+                        'h-full w-full rounded-2xl object-cover transition duration-300 ease-out group-hover:scale-105',
+                        isActive ? 'grayscale-0' : 'grayscale'
+                    ].join(' ')}
                 />
             </span>
         )
@@ -285,7 +288,11 @@ function OrganizationLogo({ entry }: { entry: JourneyEntry }) {
 
     const fallback = (
         <span
-            className={`${commonClassName} bg-[linear-gradient(135deg,rgba(31,111,104,0.12),rgba(31,29,23,0.03))] text-sm font-semibold tracking-[0.14em] text-foreground uppercase group-hover:text-accent`}
+            className={[
+                commonClassName,
+                'bg-[linear-gradient(135deg,rgba(31,111,104,0.12),rgba(31,29,23,0.03))] text-sm font-semibold tracking-[0.14em] uppercase transition-colors duration-300',
+                isActive ? 'text-accent' : 'text-foreground group-hover:text-accent'
+            ].join(' ')}
         >
             {entry.logoLabel ?? entry.organization.slice(0, 3)}
         </span>

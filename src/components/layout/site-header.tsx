@@ -10,7 +10,7 @@ const navigationItems = [
 export function SiteHeader() {
     return (
         <header className='sticky top-0 z-10 border-b border-border/80 bg-background/90 backdrop-blur'>
-            <div className='flex flex-col gap-5 py-5 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='mx-auto flex w-full max-w-6xl flex-col gap-5 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-10 lg:px-12'>
                 <Link href='/' className='text-sm font-semibold tracking-[0.24em] text-foreground uppercase'>
                     Germán Cocca
                 </Link>

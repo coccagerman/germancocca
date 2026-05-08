@@ -67,6 +67,44 @@ describe('MyJourney', () => {
 
         expect(within(focusCard).getByText('Technical Author')).toBeInTheDocument()
         expect(within(focusCard).getByText('freeCodeCamp')).toBeInTheDocument()
+        expect(
+            within(focusCard).getByText(
+                'I published 36 technical articles on JavaScript, React, frontend development, and software engineering for a global developer audience, translating complex topics into practical learning material.'
+            )
+        ).toBeInTheDocument()
+        expect(
+            screen.getByText(
+                'That work made my technical communication sharper and pushed me toward solutions that other engineers can understand, review, and maintain more easily.'
+            )
+        ).toBeInTheDocument()
         expect(within(focusCard).getByText('Clear technical communication')).toBeInTheDocument()
+    })
+
+    it('colors only the logo that belongs to the active journey entry', () => {
+        const { container } = render(<MyJourney />)
+
+        const observer = IntersectionObserverMock.instances[0]
+        const journeyEntries = container.querySelectorAll('[data-testid="journey-entry"]')
+        const comafiLogo = screen.getByAltText('Banco Comafi logo')
+        const groovinadsLogo = screen.getByAltText('Groovinads logo')
+
+        expect(comafiLogo).toHaveClass('grayscale-0')
+        expect(groovinadsLogo).toHaveClass('grayscale')
+
+        act(() => {
+            observer.callback(
+                [
+                    {
+                        isIntersecting: true,
+                        intersectionRatio: 0.9,
+                        target: journeyEntries[1]
+                    } as IntersectionObserverEntry
+                ],
+                observer as unknown as IntersectionObserver
+            )
+        })
+
+        expect(comafiLogo).toHaveClass('grayscale')
+        expect(groovinadsLogo).toHaveClass('grayscale-0')
     })
 })
