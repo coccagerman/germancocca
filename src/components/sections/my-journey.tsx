@@ -18,7 +18,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
     }
 
     useEffect(() => {
-        const items = itemRefs.current.filter(Boolean)
+        const items = itemRefs.current.filter((item): item is HTMLElement => item !== null)
 
         if (items.length === 0 || typeof IntersectionObserver === 'undefined') {
             return
@@ -60,23 +60,28 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
             id='my-journey'
             ref={sectionRef}
             aria-labelledby='my-journey-title'
-            className='space-y-10 pt-10 sm:space-y-12 sm:pt-14'
+            className='relative isolate -mx-6 bg-[#f4eee4] px-6 pt-10 pb-12 sm:-mx-10 sm:px-10 sm:pt-14 sm:pb-16 lg:-mx-12 lg:px-12'
         >
+            <div className='absolute inset-0 -z-10 bg-[#f4eee4]' aria-hidden='true' />
+
             <div className='w-full space-y-4'>
                 <p className='text-sm font-medium uppercase tracking-[0.28em] text-accent'>{journeyIntro.eyebrow}</p>
                 <h2
                     id='my-journey-title'
-                    className='max-w-6xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl'
+                    className='w-full text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl'
                 >
                     {journeyIntro.title}
                 </h2>
-                <p className='max-w-6xl text-base leading-8 text-muted sm:text-lg'>{journeyIntro.description}</p>
-                <p className='max-w-6xl text-base leading-8 text-muted sm:text-lg'>{journeyIntro.bridge}</p>
+                <p className='w-full text-base leading-8 text-muted sm:text-lg'>{journeyIntro.description}</p>
+                <p className='w-full text-base leading-8 text-muted sm:text-lg'>{journeyIntro.bridge}</p>
             </div>
 
-            <div className='grid gap-8 lg:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)] lg:gap-12'>
-                <div className='space-y-5 lg:sticky lg:top-28 lg:self-start'>
-                    <div className='rounded-[2rem] border border-border bg-[linear-gradient(180deg,rgba(255,253,249,0.96),rgba(246,241,232,0.9))] p-6 shadow-[0_18px_44px_rgba(31,29,23,0.08)]'>
+            <div className='grid gap-8 lg:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)] lg:gap-12 lg:pt-12'>
+                <div className='space-y-5'>
+                    <div
+                        data-testid='journey-focus-card'
+                        className='rounded-4xl border border-border bg-[linear-gradient(180deg,rgba(255,253,249,0.96),rgba(246,241,232,0.9))] p-6 shadow-[0_18px_44px_rgba(31,29,23,0.08)] lg:sticky lg:top-28'
+                    >
                         <p className='text-xs font-medium uppercase tracking-[0.24em] text-muted'>Currently in focus</p>
                         <p className='mt-4 text-sm font-medium uppercase tracking-[0.18em] text-accent'>
                             {activeEntry.period}
@@ -137,10 +142,11 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
                                     ref={element => {
                                         itemRefs.current[index] = element
                                     }}
+                                    data-testid='journey-entry'
                                     data-index={index}
                                     aria-current={isActive ? 'step' : undefined}
                                     className={[
-                                        'relative rounded-[2rem] border p-6 shadow-[0_18px_44px_rgba(31,29,23,0.06)] transition duration-500 ease-out will-change-transform sm:p-7',
+                                        'relative rounded-4xl border p-6 shadow-[0_18px_44px_rgba(31,29,23,0.06)] transition duration-500 ease-out will-change-transform sm:p-7',
                                         isActive
                                             ? 'border-foreground/18 bg-surface opacity-100'
                                             : isCompleted
@@ -189,7 +195,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
                 </div>
             </div>
 
-            <div className='rounded-[2rem] border border-border bg-[linear-gradient(135deg,rgba(255,253,249,0.96),rgba(246,241,232,0.88))] p-7 shadow-[0_18px_44px_rgba(31,29,23,0.08)] sm:p-8'>
+            <div className='rounded-4xl border border-border bg-[linear-gradient(135deg,rgba(255,253,249,0.96),rgba(246,241,232,0.88))] p-7 shadow-[0_18px_44px_rgba(31,29,23,0.08)] sm:p-8'>
                 <div className='flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between'>
                     <div className='max-w-2xl space-y-3'>
                         <p className='text-sm font-medium uppercase tracking-[0.28em] text-accent'>Next step</p>
@@ -245,7 +251,7 @@ export function MyJourney({ sectionRef }: MyJourneyProps) {
 
 function OrganizationLogo({ entry }: { entry: JourneyEntry }) {
     const commonClassName =
-        'group inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-[0.95rem] border border-border bg-background/85 p-1 transition duration-300 ease-out hover:-translate-y-0.5 hover:border-foreground/20 sm:h-13 sm:w-13 sm:p-1.25'
+        'group inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1rem] transition duration-300 ease-out hover:-translate-y-0.5 sm:h-[4.5rem] sm:w-[4.5rem]'
 
     if (entry.logoSrc) {
         const image = (
@@ -253,9 +259,9 @@ function OrganizationLogo({ entry }: { entry: JourneyEntry }) {
                 <Image
                     src={entry.logoSrc}
                     alt={entry.logoAlt ?? `${entry.organization} logo`}
-                    width={72}
-                    height={72}
-                    className='h-full w-full object-contain grayscale transition duration-300 ease-out group-hover:scale-105 group-hover:grayscale-0'
+                    width={96}
+                    height={96}
+                    className='h-full w-full rounded-2xl object-cover grayscale transition duration-300 ease-out group-hover:scale-105 group-hover:grayscale-0'
                 />
             </span>
         )

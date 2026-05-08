@@ -58,3 +58,37 @@ test('blog cards show thumbnails and centered pagination controls work', async (
     await page.getByRole('navigation', { name: 'Pagination' }).getByLabel('Go to last page').click()
     await expect(page).toHaveURL(/page=6/)
 })
+
+test('journey focus card stays pinned while timeline entries keep scrolling', async ({ page }) => {
+    await page.goto('/')
+
+    const journeySection = page.locator('#my-journey')
+    const focusCard = page.getByTestId('journey-focus-card')
+    const activeEntry = page.locator('[data-testid="journey-entry"][aria-current="step"]')
+
+    await journeySection.scrollIntoViewIfNeeded()
+    await expect(focusCard).toBeVisible()
+
+    await expect
+        .poll(
+            async () => {
+                const activeIndex = Number(await activeEntry.getAttribute('data-index'))
+
+                if (activeIndex < 4) {
+                    await page.mouse.wheel(0, 260)
+                }
+
+                return activeIndex
+            },
+            { timeout: 8000 }
+        )
+        .toBeGreaterThanOrEqual(4)
+
+    const focusCardBox = await focusCard.boundingBox()
+
+    expect(focusCardBox).not.toBeNull()
+    expect(focusCardBox?.y ?? -1).toBeGreaterThanOrEqual(0)
+    expect((focusCardBox?.y ?? 0) + (focusCardBox?.height ?? Number.POSITIVE_INFINITY)).toBeLessThanOrEqual(
+        page.viewportSize()?.height ?? 0
+    )
+})

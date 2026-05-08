@@ -125,7 +125,9 @@ export const journeyEntries: JourneyEntry[] = [
         story: 'Before software became the center of my work, I spent years in HR, talent, and recruiting roles, learning how organizations hire, communicate, and make decisions around people and business priorities.',
         lesson: 'Those years gave me a durable business lens: I naturally think about relationships, trust, incentives, and the human side of delivery, not just the implementation layer.',
         highlights: ['Business context', 'Communication across functions', 'People-first decision making'],
-        logoLabel: 'People'
+        url: 'https://ypf.com/',
+        logoSrc: '/ypf_s_a__logo.jpeg',
+        logoAlt: 'YPF logo'
     },
     {
         kind: 'education',
