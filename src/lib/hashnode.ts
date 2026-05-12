@@ -1,3 +1,5 @@
+import { lookup } from 'node:dns/promises'
+
 const HASHNODE_ENDPOINT = 'https://gql.hashnode.com'
 const HASHNODE_USERNAME = 'GerCocca'
 const HASHNODE_PAGE_SIZE = 20
@@ -6,6 +8,24 @@ const HASHNODE_ERROR_BODY_PREVIEW_LENGTH = 500
 export const BLOG_REVALIDATE_SECONDS = 3600
 
 type HashnodeErrorKind = 'network' | 'http' | 'invalid-json' | 'graphql' | 'empty-data'
+
+type HashnodeSerializedError = {
+    name: string
+    message: string
+    code?: string
+    errno?: number
+    syscall?: string
+    hostname?: string
+    cause?: HashnodeSerializedError
+}
+
+type HashnodeDnsDiagnostics = {
+    hostname: string
+    resolved: boolean
+    address?: string
+    family?: number
+    error?: HashnodeSerializedError
+}
 
 type HashnodePostNode = {
     title: string
@@ -75,6 +95,7 @@ const POSTS_QUERY = `
 type HashnodeRequestErrorDetails = {
     kind: HashnodeErrorKind
     endpoint: string
+    endpointHostname: string
     operationName: string
     requestId: string
     durationMs: number
@@ -86,6 +107,8 @@ type HashnodeRequestErrorDetails = {
     responseBodyPreview?: string
     graphqlErrors?: string[]
     causeMessage?: string
+    cause?: HashnodeSerializedError
+    dns?: HashnodeDnsDiagnostics
 }
 
 class HashnodeRequestError extends Error {
@@ -122,6 +145,69 @@ function getHashnodeVariableContext(variables: Record<string, unknown>) {
     }
 }
 
+function serializeHashnodeError(error: unknown, depth = 0): HashnodeSerializedError | undefined {
+    if (!(error instanceof Error)) {
+        return undefined
+    }
+
+    const serialized: HashnodeSerializedError = {
+        name: error.name,
+        message: error.message
+    }
+
+    const maybeCode = 'code' in error ? error.code : undefined
+    const maybeErrno = 'errno' in error ? error.errno : undefined
+    const maybeSyscall = 'syscall' in error ? error.syscall : undefined
+    const maybeHostname = 'hostname' in error ? error.hostname : undefined
+
+    if (typeof maybeCode === 'string') {
+        serialized.code = maybeCode
+    }
+
+    if (typeof maybeErrno === 'number') {
+        serialized.errno = maybeErrno
+    }
+
+    if (typeof maybeSyscall === 'string') {
+        serialized.syscall = maybeSyscall
+    }
+
+    if (typeof maybeHostname === 'string') {
+        serialized.hostname = maybeHostname
+    }
+
+    if (depth < 3 && 'cause' in error) {
+        const nestedCause = serializeHashnodeError(error.cause, depth + 1)
+
+        if (nestedCause) {
+            serialized.cause = nestedCause
+        }
+    }
+
+    return serialized
+}
+
+async function getHashnodeDnsDiagnostics(endpoint: string): Promise<HashnodeDnsDiagnostics> {
+    const hostname = new URL(endpoint).hostname
+
+    try {
+        const result = await lookup(hostname)
+
+        return {
+            hostname,
+            resolved: true,
+            address: result.address,
+            family: result.family
+        }
+    } catch (error) {
+        return {
+            hostname,
+            resolved: false,
+            error: serializeHashnodeError(error)
+        }
+    }
+}
+
 function logHashnodeRequestError(error: HashnodeRequestError) {
     console.error('[hashnode] request failed', {
         ...error.details,
@@ -150,6 +236,7 @@ async function fetchHashnode<T>(query: string, variables: Record<string, unknown
     const requestId = crypto.randomUUID()
     const operationName = getHashnodeOperationName(query)
     const variableContext = getHashnodeVariableContext(variables)
+    const endpointHostname = new URL(HASHNODE_ENDPOINT).hostname
 
     let response: Response
 
@@ -165,16 +252,21 @@ async function fetchHashnode<T>(query: string, variables: Record<string, unknown
             }
         })
     } catch (cause) {
+        const serializedCause = serializeHashnodeError(cause)
+        const dns = await getHashnodeDnsDiagnostics(HASHNODE_ENDPOINT)
         const error = new HashnodeRequestError(
             `Hashnode network request failed for ${operationName}`,
             {
                 kind: 'network',
                 endpoint: HASHNODE_ENDPOINT,
+                endpointHostname,
                 operationName,
                 requestId,
                 durationMs: Date.now() - startedAt,
                 ...variableContext,
-                causeMessage: cause instanceof Error ? cause.message : String(cause)
+                causeMessage: cause instanceof Error ? cause.message : String(cause),
+                cause: serializedCause,
+                dns
             },
             { cause: cause instanceof Error ? cause : undefined }
         )
@@ -205,6 +297,7 @@ async function fetchHashnode<T>(query: string, variables: Record<string, unknown
             {
                 kind: 'invalid-json',
                 endpoint: HASHNODE_ENDPOINT,
+                endpointHostname,
                 operationName,
                 requestId,
                 durationMs,
@@ -225,6 +318,7 @@ async function fetchHashnode<T>(query: string, variables: Record<string, unknown
         const error = new HashnodeRequestError(`Hashnode request failed with status ${response.status}`, {
             kind: 'http',
             endpoint: HASHNODE_ENDPOINT,
+            endpointHostname,
             operationName,
             requestId,
             durationMs,
@@ -243,6 +337,7 @@ async function fetchHashnode<T>(query: string, variables: Record<string, unknown
         const error = new HashnodeRequestError(graphqlErrors.join(', '), {
             kind: 'graphql',
             endpoint: HASHNODE_ENDPOINT,
+            endpointHostname,
             operationName,
             requestId,
             durationMs,
@@ -261,6 +356,7 @@ async function fetchHashnode<T>(query: string, variables: Record<string, unknown
         const error = new HashnodeRequestError('Hashnode request returned no data', {
             kind: 'empty-data',
             endpoint: HASHNODE_ENDPOINT,
+            endpointHostname,
             operationName,
             requestId,
             durationMs,

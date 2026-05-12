@@ -158,18 +158,42 @@ describe('hashnode helpers', () => {
         const originalFetch = global.fetch
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined)
 
-        global.fetch = jest.fn().mockRejectedValue(new Error('getaddrinfo ENOTFOUND gql.hashnode.com')) as typeof fetch
+        const dnsLookupError = Object.assign(new Error('getaddrinfo ENOTFOUND gql.hashnode.com'), {
+            code: 'ENOTFOUND',
+            errno: -3008,
+            syscall: 'getaddrinfo',
+            hostname: 'gql.hashnode.com'
+        })
+        const fetchError = new TypeError('fetch failed', {
+            cause: dnsLookupError
+        })
+
+        global.fetch = jest.fn().mockRejectedValue(fetchError) as typeof fetch
 
         await expect(getAllHashnodePosts()).rejects.toMatchObject({
             name: 'HashnodeRequestError',
             details: expect.objectContaining({
                 kind: 'network',
                 endpoint: 'https://gql.hashnode.com',
+                endpointHostname: 'gql.hashnode.com',
                 operationName: 'UserPosts',
                 username: 'GerCocca',
                 page: 1,
                 pageSize: 20,
-                causeMessage: 'getaddrinfo ENOTFOUND gql.hashnode.com'
+                causeMessage: 'fetch failed',
+                cause: expect.objectContaining({
+                    name: 'TypeError',
+                    message: 'fetch failed',
+                    cause: expect.objectContaining({
+                        code: 'ENOTFOUND',
+                        hostname: 'gql.hashnode.com',
+                        message: 'getaddrinfo ENOTFOUND gql.hashnode.com',
+                        syscall: 'getaddrinfo'
+                    })
+                }),
+                dns: expect.objectContaining({
+                    hostname: 'gql.hashnode.com'
+                })
             })
         })
 
@@ -178,11 +202,19 @@ describe('hashnode helpers', () => {
             expect.objectContaining({
                 kind: 'network',
                 endpoint: 'https://gql.hashnode.com',
+                endpointHostname: 'gql.hashnode.com',
                 operationName: 'UserPosts',
                 username: 'GerCocca',
                 page: 1,
                 pageSize: 20,
-                causeMessage: 'getaddrinfo ENOTFOUND gql.hashnode.com'
+                causeMessage: 'fetch failed',
+                cause: expect.objectContaining({
+                    name: 'TypeError',
+                    message: 'fetch failed'
+                }),
+                dns: expect.objectContaining({
+                    hostname: 'gql.hashnode.com'
+                })
             })
         )
 
@@ -205,6 +237,7 @@ describe('hashnode helpers', () => {
             name: 'HashnodeRequestError',
             details: expect.objectContaining({
                 kind: 'http',
+                endpointHostname: 'gql.hashnode.com',
                 status: 403,
                 statusText: 'Forbidden',
                 responseBodyPreview: '{"errors":[{"message":"Forbidden"}]}'
@@ -215,6 +248,7 @@ describe('hashnode helpers', () => {
             '[hashnode] request failed',
             expect.objectContaining({
                 kind: 'http',
+                endpointHostname: 'gql.hashnode.com',
                 status: 403,
                 statusText: 'Forbidden',
                 responseBodyPreview: '{"errors":[{"message":"Forbidden"}]}'
