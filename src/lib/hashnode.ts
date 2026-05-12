@@ -1,8 +1,11 @@
 const HASHNODE_ENDPOINT = 'https://gql.hashnode.com'
 const HASHNODE_USERNAME = 'GerCocca'
 const HASHNODE_PAGE_SIZE = 20
+const HASHNODE_ERROR_BODY_PREVIEW_LENGTH = 500
 
 export const BLOG_REVALIDATE_SECONDS = 3600
+
+type HashnodeErrorKind = 'network' | 'http' | 'invalid-json' | 'graphql' | 'empty-data'
 
 type HashnodePostNode = {
     title: string
@@ -69,6 +72,65 @@ const POSTS_QUERY = `
     }
 `
 
+type HashnodeRequestErrorDetails = {
+    kind: HashnodeErrorKind
+    endpoint: string
+    operationName: string
+    requestId: string
+    durationMs: number
+    username: string | null
+    page: number | null
+    pageSize: number | null
+    status?: number
+    statusText?: string
+    responseBodyPreview?: string
+    graphqlErrors?: string[]
+    causeMessage?: string
+}
+
+class HashnodeRequestError extends Error {
+    readonly details: HashnodeRequestErrorDetails
+
+    constructor(message: string, details: HashnodeRequestErrorDetails, options?: ErrorOptions) {
+        super(message, options)
+        this.name = 'HashnodeRequestError'
+        this.details = details
+    }
+}
+
+function getHashnodeOperationName(query: string) {
+    const match = query.match(/query\s+([A-Za-z0-9_]+)/)
+
+    return match?.[1] ?? 'anonymous'
+}
+
+function getHashnodeBodyPreview(body: string) {
+    if (!body) {
+        return ''
+    }
+
+    return body.length > HASHNODE_ERROR_BODY_PREVIEW_LENGTH
+        ? `${body.slice(0, HASHNODE_ERROR_BODY_PREVIEW_LENGTH)}...`
+        : body
+}
+
+function getHashnodeVariableContext(variables: Record<string, unknown>) {
+    return {
+        username: typeof variables.username === 'string' ? variables.username : null,
+        page: typeof variables.page === 'number' ? variables.page : null,
+        pageSize: typeof variables.pageSize === 'number' ? variables.pageSize : null
+    }
+}
+
+function logHashnodeRequestError(error: HashnodeRequestError) {
+    console.error('[hashnode] request failed', {
+        ...error.details,
+        message: error.message,
+        vercelEnv: process.env.VERCEL_ENV ?? 'local',
+        runtime: process.env.NEXT_RUNTIME ?? 'nodejs'
+    })
+}
+
 function normalizeHashnodePost(node: HashnodePostNode): BlogPost {
     return {
         title: node.title,
@@ -84,32 +146,132 @@ function normalizeHashnodePost(node: HashnodePostNode): BlogPost {
 }
 
 async function fetchHashnode<T>(query: string, variables: Record<string, unknown>) {
-    const response = await fetch(HASHNODE_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'content-type': 'application/json'
-        },
-        body: JSON.stringify({ query, variables }),
-        next: {
-            revalidate: BLOG_REVALIDATE_SECONDS
-        }
-    })
+    const startedAt = Date.now()
+    const requestId = crypto.randomUUID()
+    const operationName = getHashnodeOperationName(query)
+    const variableContext = getHashnodeVariableContext(variables)
 
-    if (!response.ok) {
-        throw new Error(`Hashnode request failed with status ${response.status}`)
+    let response: Response
+
+    try {
+        response = await fetch(HASHNODE_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({ query, variables }),
+            next: {
+                revalidate: BLOG_REVALIDATE_SECONDS
+            }
+        })
+    } catch (cause) {
+        const error = new HashnodeRequestError(
+            `Hashnode network request failed for ${operationName}`,
+            {
+                kind: 'network',
+                endpoint: HASHNODE_ENDPOINT,
+                operationName,
+                requestId,
+                durationMs: Date.now() - startedAt,
+                ...variableContext,
+                causeMessage: cause instanceof Error ? cause.message : String(cause)
+            },
+            { cause: cause instanceof Error ? cause : undefined }
+        )
+
+        logHashnodeRequestError(error)
+        throw error
     }
 
-    const payload = (await response.json()) as {
+    const durationMs = Date.now() - startedAt
+    const rawBody = await response.text()
+    const bodyPreview = getHashnodeBodyPreview(rawBody)
+
+    let payload: {
         data?: T
         errors?: Array<{ message: string }>
     }
 
+    try {
+        payload = rawBody
+            ? ((JSON.parse(rawBody) as {
+                  data?: T
+                  errors?: Array<{ message: string }>
+              }) ?? {})
+            : {}
+    } catch (cause) {
+        const error = new HashnodeRequestError(
+            `Hashnode returned invalid JSON for ${operationName}`,
+            {
+                kind: 'invalid-json',
+                endpoint: HASHNODE_ENDPOINT,
+                operationName,
+                requestId,
+                durationMs,
+                ...variableContext,
+                status: response.status,
+                statusText: response.statusText,
+                responseBodyPreview: bodyPreview,
+                causeMessage: cause instanceof Error ? cause.message : String(cause)
+            },
+            { cause: cause instanceof Error ? cause : undefined }
+        )
+
+        logHashnodeRequestError(error)
+        throw error
+    }
+
+    if (!response.ok) {
+        const error = new HashnodeRequestError(`Hashnode request failed with status ${response.status}`, {
+            kind: 'http',
+            endpoint: HASHNODE_ENDPOINT,
+            operationName,
+            requestId,
+            durationMs,
+            ...variableContext,
+            status: response.status,
+            statusText: response.statusText,
+            responseBodyPreview: bodyPreview
+        })
+
+        logHashnodeRequestError(error)
+        throw error
+    }
+
     if (payload.errors?.length) {
-        throw new Error(payload.errors.map(error => error.message).join(', '))
+        const graphqlErrors = payload.errors.map(error => error.message)
+        const error = new HashnodeRequestError(graphqlErrors.join(', '), {
+            kind: 'graphql',
+            endpoint: HASHNODE_ENDPOINT,
+            operationName,
+            requestId,
+            durationMs,
+            ...variableContext,
+            status: response.status,
+            statusText: response.statusText,
+            graphqlErrors,
+            responseBodyPreview: bodyPreview
+        })
+
+        logHashnodeRequestError(error)
+        throw error
     }
 
     if (!payload.data) {
-        throw new Error('Hashnode request returned no data')
+        const error = new HashnodeRequestError('Hashnode request returned no data', {
+            kind: 'empty-data',
+            endpoint: HASHNODE_ENDPOINT,
+            operationName,
+            requestId,
+            durationMs,
+            ...variableContext,
+            status: response.status,
+            statusText: response.statusText,
+            responseBodyPreview: bodyPreview
+        })
+
+        logHashnodeRequestError(error)
+        throw error
     }
 
     return payload.data

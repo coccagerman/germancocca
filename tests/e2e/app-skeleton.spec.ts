@@ -14,7 +14,9 @@ test('main routes render and navigation works', async ({ page }) => {
 
     await primaryNav.getByRole('link', { name: 'Blog' }).click()
     await expect(page).toHaveURL(/\/blog$/)
-    await expect(page.getByRole('heading', { name: 'Articles and handbooks published on freeCodeCamp.' })).toBeVisible()
+    await expect(
+        page.getByRole('heading', { name: 'My articles, notes, and handbooks on software engineering.' })
+    ).toBeVisible()
     await expect(page.getByLabel('Search articles')).toBeVisible()
 
     const firstArticle = page.getByRole('link', { name: 'Read article' }).first()
