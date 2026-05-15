@@ -1,4 +1,4 @@
-import type { BlogPost } from '@/lib/hashnode'
+import type { BlogPost } from '@/lib/blog-feed'
 
 export const BLOG_POSTS_PER_PAGE = 6
 

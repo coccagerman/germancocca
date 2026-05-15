@@ -10,7 +10,7 @@ import {
     normalizePageParam,
     paginateBlogPosts
 } from '@/lib/blog'
-import { getAllHashnodePosts } from '@/lib/hashnode'
+import { getAllBlogPosts } from '@/lib/blog-feed'
 
 type BlogPageProps = {
     searchParams: Promise<{
@@ -41,10 +41,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     const query = await searchParams
     const normalizedQuery = normalizeBlogQuery(query.q)
     const requestedPage = normalizePageParam(query.page)
-    let allPosts: Awaited<ReturnType<typeof getAllHashnodePosts>> | null = null
+    let allPosts: Awaited<ReturnType<typeof getAllBlogPosts>> | null = null
 
     try {
-        allPosts = await getAllHashnodePosts()
+        allPosts = await getAllBlogPosts()
     } catch {
         return (
             <section className='space-y-8'>
@@ -54,7 +54,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                         Articles are temporarily unavailable.
                     </h1>
                     <p className='text-base leading-8 text-muted sm:text-lg'>
-                        The Hashnode source could not be reached right now. Please try again shortly.
+                        The blog feed could not be reached right now. Please try again shortly.
                     </p>
                 </div>
             </section>

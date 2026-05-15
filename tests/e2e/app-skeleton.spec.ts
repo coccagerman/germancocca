@@ -46,6 +46,7 @@ test('blog cards show thumbnails and centered pagination controls work', async (
     await page.goto('/blog')
 
     await expect(page.locator('article img[alt$="cover image"]').first()).toBeVisible()
+    const pageSummary = page.getByText(/Page \d+ of \d+/)
 
     const pagination = page.getByRole('navigation', { name: 'Pagination' })
     await expect(pagination).toBeVisible()
@@ -58,7 +59,8 @@ test('blog cards show thumbnails and centered pagination controls work', async (
     await expect(page.getByRole('navigation', { name: 'Pagination' }).getByLabel('Go to last page')).toBeVisible()
 
     await page.getByRole('navigation', { name: 'Pagination' }).getByLabel('Go to last page').click()
-    await expect(page).toHaveURL(/page=6/)
+    const lastPage = Number((await pageSummary.textContent())?.match(/of (\d+)/)?.[1] ?? '1')
+    await expect(page).toHaveURL(new RegExp(`page=${lastPage}$`))
 })
 
 test('journey focus card stays pinned while timeline entries keep scrolling', async ({ page }) => {

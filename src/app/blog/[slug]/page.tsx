@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { formatBlogDate } from '@/lib/blog'
-import { getAllHashnodePosts, getHashnodePostBySlug } from '@/lib/hashnode'
+import { getAllBlogPosts, getBlogPostBySlug } from '@/lib/blog-feed'
 
 type BlogDetailPageProps = {
     params: Promise<{
@@ -13,7 +13,7 @@ type BlogDetailPageProps = {
 
 export async function generateStaticParams() {
     try {
-        const posts = await getAllHashnodePosts()
+        const posts = await getAllBlogPosts()
 
         return posts.map(post => ({ slug: post.slug }))
     } catch {
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
     const { slug } = await params
 
     try {
-        const post = await getHashnodePostBySlug(slug)
+        const post = await getBlogPostBySlug(slug)
 
         if (!post) {
             return {
@@ -62,10 +62,10 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     const { slug } = await params
-    let post: Awaited<ReturnType<typeof getHashnodePostBySlug>> | null = null
+    let post: Awaited<ReturnType<typeof getBlogPostBySlug>> | null = null
 
     try {
-        post = await getHashnodePostBySlug(slug)
+        post = await getBlogPostBySlug(slug)
     } catch {
         return (
             <section className='max-w-3xl space-y-6'>

@@ -3,7 +3,7 @@ import Link from 'next/link'
 const postPlaceholders = [
     {
         title: 'Writing pipeline placeholder',
-        description: 'A temporary slot for articles that will later be pulled from Hashnode.',
+        description: 'A temporary slot for articles that will later be pulled from the public blog feed.',
         href: '/blog/post-placeholder'
     },
     {
@@ -27,8 +27,8 @@ export function BlogPlaceholder() {
                     Articles will be listed here.
                 </h1>
                 <p className='text-base leading-8 text-muted sm:text-lg'>
-                    The route structure is ready for a future Hashnode integration while keeping the current version
-                    simple, static, and fast.
+                    The route structure is ready for a feed-backed archive while keeping the current version simple,
+                    static, and fast.
                 </p>
             </div>
 
